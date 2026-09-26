@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Builds the Kasoundbox "Reservation & Inventory Process Flow" guide.
+ * Builds the Kasoundbox "Website, Reservation & Inventory Process Flow" guide.
  *
  *   node docs/process-flow/build.mjs
  *
@@ -21,7 +21,7 @@ import { tmpdir } from 'node:os';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT_HTML = join(HERE, 'Kasoundbox-Process-Flow-Guide.html');
 const OUT_PDF = join(HERE, 'Kasoundbox-Process-Flow-Guide.pdf');
-const VERSION = 'Version 1.0 · September 26, 2026';
+const VERSION = 'Version 1.1 · September 26, 2026';
 
 // ─── Flowchart primitives ────────────────────────────────────────────────────
 
@@ -49,7 +49,11 @@ const ST = {
   ret: { stroke: '#7048e8', fill: '#e5dbff', text: '#3b1f99' },
   done: { stroke: '#2b8a3e', fill: '#d3f9d8', text: '#1b5e2a' },
   bad: { stroke: '#c92a2a', fill: '#ffe3e3', text: '#7d1a1a' },
+  off: { stroke: '#868e96', fill: '#f1f3f5', text: '#343a40' },
 };
+
+// Website teal (the website band, its chips and the arrows into and out of it).
+const WEB = { stroke: '#0c8599', fill: '#e3fafc', text: '#0b7285', chip: '#99e9f2' };
 
 const esc = (s) =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -279,30 +283,53 @@ function legendSvg() {
 
 function overviewSvg() {
   const f = Flow();
-  const L = 175, R = 522;
-  f.node('s', 'terminal', 'Customer visits the website', { cx: L, w: 300 })
-    .node('l1', 'step', ['Picks items, event date, start', 'time and number of days'], { actor: 'CUSTOMER', cx: L, w: 300 })
-    .node('l2', 'step', 'Sends a reservation request', { actor: 'CUSTOMER', cx: L, w: 300 })
-    .node('l3', 'step', ['Reviews, collects the downpayment', 'and confirms the booking'], { actor: 'ADMIN', cx: L, w: 300 })
-    .node('l4', 'step', 'Delivers the items (dispatch)', { actor: 'ADMIN', cx: L, w: 300 })
-    .node('l5', 'step', ['Uses the items', '(22 hours per rental day)'], { actor: 'CUSTOMER', cx: L, w: 300 })
-    .node('l6', 'step', ['Picks up, checks and tests', 'the items (check-in)'], { actor: 'ADMIN', cx: L, w: 300 })
-    .node('e', 'terminal', 'Fully paid: *COMPLETED*', { cx: L, w: 300 })
-    .node('r1', 'step', ['Shows how many are free', 'for that exact time'], { actor: 'SYSTEM', cx: R, w: 290 })
-    .node('r2', 'step', ['Checks stock again before', 'saving the request'], { actor: 'SYSTEM', cx: R, w: 290 })
-    .node('r3', 'step', ['Holds the items for this booking;', 'no one else can book them'], { actor: 'SYSTEM', cx: R, w: 290 })
-    .node('r4', 'step', ['Records which units went out', '(e.g. videoke VK-02)'], { actor: 'SYSTEM', cx: R, w: 290 })
-    .node('r6', 'step', ['Updates stock: good → back,', 'damaged → repair, missing → lost'], { actor: 'SYSTEM', cx: R, w: 290 });
-  f.stack(['s', 'l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'e'], { y: 40, gap: 20 });
-  f.align('r1', 'l1').align('r2', 'l2').align('r3', 'l3').align('r4', 'l4').align('r6', 'l6');
-  for (const [a, b] of [['s', 'l1'], ['l1', 'l2'], ['l2', 'l3'], ['l3', 'l4'], ['l4', 'l5'], ['l5', 'l6'], ['l6', 'e']]) f.edge(a, b);
-  for (const [a, b] of [['l1', 'r1'], ['l2', 'r2'], ['l3', 'r3'], ['l4', 'r4'], ['l6', 'r6']]) {
+  const L = 175, R = 505, LW = 300, RW = 260, top = 132;
+  f.node('s', 'terminal', 'Customer taps *Reserve*', { cx: L, w: LW })
+    .node('l1', 'step', 'Picks the date, start time and days', { actor: 'CUSTOMER', cx: L, w: LW })
+    .node('l2', 'step', 'Picks items that are free then', { actor: 'CUSTOMER', cx: L, w: LW })
+    .node('l3', 'step', ['Adds the venue, checks the price', 'and sends the request'], { actor: 'CUSTOMER', cx: L, w: LW })
+    .node('l4', 'step', ['Reviews, collects the downpayment', 'and confirms the booking'], { actor: 'ADMIN', cx: L, w: LW })
+    .node('l5', 'step', 'Delivers the items (dispatch)', { actor: 'ADMIN', cx: L, w: LW })
+    .node('l6', 'step', 'Uses the items (22 hours per rental day)', { actor: 'CUSTOMER', cx: L, w: LW })
+    .node('l7', 'step', ['Picks up, checks and tests', 'the items (check-in)'], { actor: 'ADMIN', cx: L, w: LW })
+    .node('e', 'terminal', 'Fully paid: *COMPLETED*', { cx: L, w: LW })
+    .node('r1', 'step', ['Shows how many are free', 'for that exact time'], { actor: 'SYSTEM', cx: R, w: RW })
+    .node('r2', 'step', ['Checks stock again before', 'saving the request'], { actor: 'SYSTEM', cx: R, w: RW })
+    .node('r3', 'step', ['Holds the items for this booking;', 'no one else can book them'], { actor: 'SYSTEM', cx: R, w: RW })
+    .node('r4', 'step', ['Records which units went out', '(e.g. videoke VK-02)'], { actor: 'SYSTEM', cx: R, w: RW })
+    .node('r6', 'step', ['Updates stock: good → back,', 'damaged → repair, missing → lost'], { actor: 'SYSTEM', cx: R, w: RW })
+    .node('t', 'note', ['The customer shares a testimony.', 'You publish it, and it shows', 'on the website (see C3).'], { cx: R, w: RW, tag: 'AFTERWARDS (OPTIONAL)' });
+  f.stack(['s', 'l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'e'], { y: top, gap: 18 });
+  f.align('r1', 'l2').align('r2', 'l3').align('r3', 'l4').align('r4', 'l5').align('r6', 'l7').align('t', 'e', 18);
+  for (const [a, b] of [['s', 'l1'], ['l1', 'l2'], ['l2', 'l3'], ['l3', 'l4'], ['l4', 'l5'], ['l5', 'l6'], ['l6', 'l7'], ['l7', 'e']]) f.edge(a, b);
+  for (const [a, b] of [['l2', 'r1'], ['l3', 'r2'], ['l4', 'r3'], ['l5', 'r4'], ['l7', 'r6']]) {
     f.edge(a, b, { fs: 'right', ts: 'left', dashed: true, arrow: false, color: '#7048e8' });
   }
-  f.decor(`<text x="${L}" y="20" text-anchor="middle" class="hdr">RESERVATION MODULE</text>`)
-    .decor(`<text x="${R}" y="20" text-anchor="middle" class="hdr">INVENTORY MODULE</text>`)
-    .decor(`<line x1="348" y1="8" x2="348" y2="600" stroke="#dee2e6" stroke-width="1" stroke-dasharray="2 4"/>`);
-  return f.svg('The big picture: reservation and inventory modules');
+  f.edge('e', 't', { fs: 'right', ts: 'left', toOff: -18, dashed: true, color: '#868e96' });
+
+  // The website runs across the top: Reserve leads into the booking, and published
+  // testimonies lead back up to it.
+  const N = f.nodes, bx = 12, by = 8, bw = 656, bh = 80;
+  let band = `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="12" fill="${WEB.fill}" stroke="${WEB.stroke}" stroke-width="1.6"/>`
+    + `<text x="${bx + 16}" y="${by + 21}" class="hdr" fill="${WEB.text}">WEBSITE MODULE</text>`
+    + `<text x="${bx + bw - 16}" y="${by + 21}" text-anchor="end" class="small" fill="${WEB.text}">Anyone can visit. You change it in the admin panel.</text>`;
+  let x = bx + 16, reserveX = 0;
+  for (const label of ['Reserve', 'Home', 'Rentals', 'Gallery', 'Testimonies', 'Promos', 'About', 'FAQ', 'Contact']) {
+    const main = label === 'Reserve';
+    const w = Math.round(label.length * 6.4 + (main ? 30 : 20));
+    if (main) reserveX = x + w / 2;
+    band += `<rect x="${x}" y="${by + 34}" width="${w}" height="26" rx="13" fill="${main ? WEB.stroke : '#fff'}" stroke="${main ? WEB.stroke : WEB.chip}" stroke-width="1.4"/>`
+      + `<text x="${x + w / 2}" y="${by + 51}" text-anchor="middle" class="${main ? 'lbl strong' : 'small'}" fill="${main ? '#fff' : '#084c55'}">${label}</text>`;
+    x += w + 7;
+  }
+  const backX = bx + bw - 12;
+  f.decor(band)
+    .decor(`<text x="${L}" y="${top - 16}" text-anchor="middle" class="hdr">RESERVATION MODULE</text>`)
+    .decor(`<text x="${R}" y="${top - 16}" text-anchor="middle" class="hdr">INVENTORY MODULE</text>`)
+    .decor(`<line x1="348" y1="${top - 30}" x2="348" y2="${N.t.cy + N.t.h / 2}" stroke="#dee2e6" stroke-width="1" stroke-dasharray="2 4"/>`)
+    .overlay(`<path d="M${reserveX},${by + 60} L${reserveX},${N.s.cy - N.s.h / 2}" fill="none" stroke="${WEB.stroke}" stroke-width="1.6" marker-end="url(#arr-web)"/>`)
+    .overlay(`<path d="${roundedPath([[R + RW / 2, N.t.cy], [backX, N.t.cy], [backX, by + bh]]).d}" fill="none" stroke="${WEB.stroke}" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arr-web)"/>`);
+  return f.svg('The big picture: the website, reservation and inventory modules');
 }
 
 function timelineSvg() {
@@ -329,37 +356,36 @@ function timelineSvg() {
 function a1Svg() {
   const f = Flow();
   const M = 230, S = 522, W = 260, SW = 236;
-  f.node('s', 'terminal', 'Customer opens the website', { cx: M, w: W })
-    .node('n1', 'step', ['Browse the catalog', '(no account needed)'], { actor: 'CUSTOMER', cx: M, w: W, num: 1 })
-    .node('n2', 'step', ['Set the event date, start time', '(8 AM–5 PM) and number of days'], { actor: 'CUSTOMER', cx: M, w: W, num: 2 })
-    .node('n3', 'step', ['Show the price and how many', 'are free for that exact time'], { actor: 'SYSTEM', cx: M, w: W, num: 3 })
-    .node('n4', 'step', 'Add items or packages to the cart', { actor: 'CUSTOMER', cx: M, w: W, num: 4 })
-    .node('d5', 'decision', 'Signed in?', { cx: M, num: 5 })
-    .node('s5', 'step', ['Sign in (Google or email).', 'First time: add your name and', 'mobile number, and accept', 'the privacy notice'], { actor: 'CUSTOMER', cx: S, w: SW })
-    .node('n6', 'step', ['Enter venue address, landmark,', 'notes, and promo code (optional)'], { actor: 'CUSTOMER', cx: M, w: W, num: 6 })
-    .node('d7', 'decision', ['Promo code OK?', '(if entered)'], { cx: M, tag: 'SYSTEM CHECK', num: 7 })
-    .node('s7', 'stop', ['“Code not valid”: remove', 'or fix the code'], { cx: S, w: SW })
-    .node('n8', 'step', 'Tap “Send request”', { actor: 'CUSTOMER', cx: M, w: W, num: 8 })
+  f.node('s', 'terminal', 'Customer taps *Reserve* (any page)', { cx: M, w: W })
+    .node('n1', 'step', ['*When:* the event date, start time', '(8 AM–5 PM) and number of days'], { actor: 'CUSTOMER', cx: M, w: W, num: 1 })
+    .node('n2', 'step', ['Shows the delivery and pickup', 'times, and what is free then'], { actor: 'SYSTEM', cx: M, w: W, num: 2 })
+    .node('n3', 'step', ['*What:* pick the items and how', 'many of each (the cart)'], { actor: 'CUSTOMER', cx: M, w: W, num: 3 })
+    .node('n4', 'step', ['*Where:* venue address, landmark', 'and notes for the crew'], { actor: 'CUSTOMER', cx: M, w: W, num: 4 })
+    .node('n5', 'step', ['*Review:* check the price; add a', 'promo code (optional)'], { actor: 'CUSTOMER', cx: M, w: W, num: 5 })
+    .node('d6', 'decision', ['Promo code OK?', '(if entered)'], { cx: M, tag: 'SYSTEM CHECK', num: 6 })
+    .node('s6', 'stop', ['“Code not valid”: remove', 'or fix the code'], { cx: S, w: SW })
+    .node('n7', 'step', 'Tap “Send request”', { actor: 'CUSTOMER', cx: M, w: W, num: 7 })
+    .node('d8', 'decision', 'Signed in?', { cx: M, num: 8 })
+    .node('s8', 'step', ['Sign in (Google or email); the', 'cart is kept. First time: add', 'your name and mobile number,', 'and accept the privacy notice'], { actor: 'CUSTOMER', cx: S, w: SW })
     .node('d9', 'decision', ['Still enough', 'stock now?'], { cx: M, tag: 'SYSTEM CHECK', num: 9 })
-    .node('s9', 'stop', ['“Only X left for that time”:', 'change the cart (step 4)'], { cx: S, w: SW })
-    .node('n10', 'step', ['Save as *REQUESTED* with a code', '(e.g. KSB-7Q4M); notify admins'], { actor: 'SYSTEM', cx: M, w: W, num: 10 })
-    .node('e', 'terminal', ['Customer waits for review, then', 'pays the downpayment when asked'], { cx: M, w: W });
-  f.stack(['s', 'n1', 'n2', 'n3', 'n4', 'd5', 'n6', 'd7', 'n8', 'd9', 'n10', 'e'], { gaps: { n6: 30 } });
-  f.align('s5', 'd5').align('s7', 'd7').align('s9', 'd9');
-  f.edge('s', 'n1').edge('n1', 'n2').edge('n2', 'n3').edge('n3', 'n4').edge('n4', 'd5')
-    .edge('d5', 'n6', { label: 'Yes' })
-    .edge('d5', 's5', { fs: 'right', ts: 'left', label: 'No' })
-    .edge('s5', 'n6', { fs: 'bottom', ts: 'right', toOff: -9 })
-    .edge('n6', 'd7')
-    .edge('d7', 'n8', { label: 'Yes' })
-    .edge('d7', 's7', { fs: 'right', ts: 'left', label: 'No' })
-    .edge('s7', 'n6', { fs: 'top', ts: 'right', toOff: 9 })
-    .edge('n8', 'd9')
+    .node('s9', 'stop', ['“Only X left for that time”:', 'go back to *What*, change it'], { cx: S, w: SW })
+    .node('n10', 'step', ['Save as *REQUESTED* with a code', '(e.g. KSB-8MWQ3Z); notify admins'], { actor: 'SYSTEM', cx: M, w: W, num: 10 })
+    .node('e', 'terminal', ['Request sent. The customer waits for', 'review, then pays the downpayment'], { cx: M, w: W });
+  f.stack(['s', 'n1', 'n2', 'n3', 'n4', 'n5', 'd6', 'n7', 'd8', 'd9', 'n10', 'e']);
+  f.align('s6', 'd6').align('s8', 'd8').align('s9', 'd9');
+  f.edge('s', 'n1').edge('n1', 'n2').edge('n2', 'n3').edge('n3', 'n4').edge('n4', 'n5').edge('n5', 'd6')
+    .edge('d6', 'n7', { label: 'Yes' })
+    .edge('d6', 's6', { fs: 'right', ts: 'left', label: 'No' })
+    .edge('s6', 'n5', { fs: 'top', ts: 'right' })
+    .edge('n7', 'd8')
+    .edge('d8', 'd9', { label: 'Yes' })
+    .edge('d8', 's8', { fs: 'right', ts: 'left', label: 'No' })
+    .edge('s8', 'n7', { fs: 'top', ts: 'right' })
     .edge('d9', 'n10', { label: 'Yes' })
     .edge('d9', 's9', { fs: 'right', ts: 'left', label: 'No' })
-    .edge('s9', 'n4', { fs: 'right', ts: 'right', via: (N) => [[664, N.s9.cy], [664, N.n4.cy]] })
+    .edge('s9', 'n3', { fs: 'right', ts: 'right', via: (N) => [[664, N.s9.cy], [664, N.n3.cy]] })
     .edge('n10', 'e');
-  return f.svg('A1 flowchart: customer sends a reservation request');
+  return f.svg('A1 flowchart: customer reserves in four steps');
 }
 
 function a2Svg() {
@@ -429,8 +455,9 @@ function statusSvg() {
   st('done', ['COMPLETED', 'Picked up, checked', 'and fully paid.'], ST.done, M);
   st('early', ['ENDS EARLY', 'DECLINED: admin said no', 'CANCELLED: customer/admin', 'EXPIRED: time passed'], ST.bad, R, 230);
   st('canc', ['CANCELLED', 'After confirmation, by', 'admin only; refund if any'], ST.bad, R, 230);
+  f.node('tn', 'note', ['From RETURNED or COMPLETED,', 'the customer can share a', 'testimony (see C3)'], { w: 230 });
   f.at('req', M, 66).at('con', M, 176).at('out', M, 286).at('ret', M, 396).at('done', M, 506)
-    .at('early', R, 66).at('canc', R, 176);
+    .at('early', R, 66).at('canc', R, 176).at('tn', R, 451);
   const mid = (a, b) => (f.nodes[a].cy + f.nodes[a].h / 2 + f.nodes[b].cy - f.nodes[b].h / 2) / 2;
   const left = M - 12;
   f.edge('req', 'con', { label: ['Downpayment recorded', '+ admin confirms'], labelAt: [left, mid('req', 'con') - 3], anchor: 'end' })
@@ -439,6 +466,8 @@ function statusSvg() {
     .edge('ret', 'done', { label: ['Balance reaches ₱0', '(automatic)'], labelAt: [left, mid('ret', 'done') - 3], anchor: 'end' })
     .edge('req', 'early', { fs: 'right', ts: 'left' })
     .edge('con', 'canc', { fs: 'right', ts: 'left' })
+    .edge('ret', 'tn', { fs: 'right', ts: 'left', toOff: -10, dashed: true, arrow: false, color: '#adb5bd' })
+    .edge('done', 'tn', { fs: 'right', ts: 'left', toOff: 10, dashed: true, arrow: false, color: '#adb5bd' })
     .edge('out', 'out', { fs: 'left', ts: 'left', fromOff: -9, toOff: 9, via: (N) => [[N.out.cx - N.out.w / 2 - 26, N.out.cy - 9], [N.out.cx - N.out.w / 2 - 26, N.out.cy + 9]], label: ['Extend:', 'add days'], labelAt: [M - 120 - 32, 283], anchor: 'end' });
   return f.svg('A4 diagram: booking statuses');
 }
@@ -455,7 +484,7 @@ function a5Svg() {
     .node('n5', 'step', ['Tick the inclusions checklist', '(mics, remote, cables…)'], { actor: 'ADMIN', cx: M, w: 260, num: 5 })
     .node('n6', 'step', 'Tap “Dispatch”', { actor: 'ADMIN', cx: M, w: 260, num: 6 })
     .node('n7', 'step', ['Status → *OUT*. Units marked out.', 'Customer gets “Out for delivery”'], { actor: 'SYSTEM', cx: M, w: 260, num: 7 })
-    .node('n8', 'step', ['Deliver and set up by the', 'start time'], { actor: 'ADMIN', cx: M, w: 260, num: 8 })
+    .node('n8', 'step', 'Deliver by the start time', { actor: 'ADMIN', cx: M, w: 260, num: 8 })
     .node('d9', 'decision', ['Balance paid', 'now?'], { cx: M, num: 9 })
     .node('s9', 'step', ['Record the payment (amount,', 'method, reference number)'], { actor: 'ADMIN', cx: S, w: SW })
     .node('e', 'terminal', ['Items stay with the customer', 'until pickup'], { cx: M, w: 260 });
@@ -503,7 +532,7 @@ function b1Svg() {
     .node('d6', 'decision', ['Enough for', 'every item?'], { cx: M, tag: 'SYSTEM CHECK', num: 6 })
     .node('ok', 'good', 'Yes: it can be reserved', { cx: M, w: 270 })
     .node('no', 'bad', ['No: “Only X left” plus', 'the busiest time'], { cx: S, w: 210 })
-    .node('nc', 'note', ['Asked when a customer', 'browses or sends a', 'request, and when you', 'confirm, edit or extend.'], { cx: S, w: NW })
+    .node('nc', 'note', ['Asked when a customer', 'browses or reserves, and', 'when you confirm, edit', 'or extend.'], { cx: S, w: NW })
     .node('na', 'note', ['Requests don’t count.', 'Only confirmed and out', 'bookings hold stock.'], { cx: S, w: NW })
     .node('nb', 'note', ['Late items that aren’t', 'checked in yet count', 'as still out.'], { cx: S, w: NW });
   f.stack(['s', 'n1', 'n2', 'n3', 'n4', 'n5', 'd6', 'ok']);
@@ -644,6 +673,77 @@ function b5Svg() {
   return f.svg('B5 flowchart: recording inventory changes');
 }
 
+function c2Svg() {
+  const f = Flow();
+  const M = 250, S = 550, SW = 220;
+  f.node('s', 'terminal', 'Something on the website should change', { cx: M, w: 270 })
+    .node('n1', 'step', ['Open its screen in the admin', 'panel (see the table in C1)'], { actor: 'ADMIN', cx: M, w: 270, num: 1 })
+    .node('n2', 'step', ['Type the text, upload photos, or', 'switch “Show on Home” on or off'], { actor: 'ADMIN', cx: M, w: 270, num: 2 })
+    .node('n3', 'step', 'Tap “Save”', { actor: 'ADMIN', cx: M, w: 270, num: 3 })
+    .node('d4', 'decision', ['Within the', 'limits?'], { cx: M, tag: 'SYSTEM CHECK', num: 4 })
+    .node('s4', 'stop', ['Shows what to fix under', 'the field, e.g. “Up to 80', 'characters”. Nothing is saved.'], { cx: S, w: SW })
+    .node('n5', 'step', ['Saves it and records who', 'changed what, and when'], { actor: 'SYSTEM', cx: M, w: 270, num: 5 })
+    .node('n6', 'step', 'The website shows it right away', { actor: 'SYSTEM', cx: M, w: 270, num: 6 })
+    .node('n7', 'step', 'Tap “View on site” to check it', { actor: 'ADMIN', cx: M, w: 270, num: 7 })
+    .node('e', 'terminal', 'Done', { cx: M, w: 270 });
+  f.stack(['s', 'n1', 'n2', 'n3', 'd4', 'n5', 'n6', 'n7', 'e']);
+  f.align('s4', 'd4');
+  f.edge('s', 'n1').edge('n1', 'n2').edge('n2', 'n3').edge('n3', 'd4')
+    .edge('d4', 'n5', { label: 'Yes' })
+    .edge('d4', 's4', { fs: 'right', ts: 'left', label: 'No' })
+    .edge('s4', 'n2', { fs: 'top', ts: 'right' })
+    .edge('n5', 'n6').edge('n6', 'n7').edge('n7', 'e');
+  return f.svg('C2 flowchart: updating the website');
+}
+
+function c3Svg() {
+  const f = Flow();
+  const M = 250, S = 550, SW = 220;
+  f.node('s', 'terminal', ['The booking is *RETURNED*', 'or *COMPLETED*'], { cx: M, w: 270 })
+    .node('n1', 'step', ['In My reservations, the customer', 'taps “Share a testimony”'], { actor: 'CUSTOMER', cx: M, w: 270, num: 1 })
+    .node('n2', 'step', ['Writes 20–600 characters, checks', 'the display name (e.g. “Maria S.”)', 'and ticks the consent box'], { actor: 'CUSTOMER', cx: M, w: 270, num: 2 })
+    .node('d3', 'decision', 'Allowed?', { cx: M, tag: 'SYSTEM CHECK', num: 3 })
+    .node('s3', 'stop', ['Not saved: only the booking’s', 'own customer, only after', 'pickup, one per booking, and', 'at most 3 an hour'], { cx: S, w: SW })
+    .node('n4', 'step', ['Saved as *WAITING*; you and', 'your dad get a notification'], { actor: 'SYSTEM', cx: M, w: 270, num: 4 })
+    .node('n5', 'step', ['Open Website › Testimonies', '(Waiting tab) and read it'], { actor: 'ADMIN', cx: M, w: 270, num: 5 })
+    .node('d6', 'decision', ['Show it on', 'the website?'], { cx: M, tag: 'ADMIN DECIDES', num: 6 })
+    .node('x6', 'bad', ['“Hide”: *HIDDEN*, it stays', 'off the website'], { cx: S, w: SW })
+    .node('n7', 'step', 'Tap “Publish”', { actor: 'ADMIN', cx: M, w: 270, num: 7 })
+    .node('n8', 'step', ['*PUBLISHED*: on the Testimonies', 'page; the customer is notified'], { actor: 'SYSTEM', cx: M, w: 270, num: 8 })
+    .node('d9', 'decision', ['Feature it', 'on Home?'], { cx: M, tag: 'ADMIN DECIDES', num: 9 })
+    .node('s9', 'step', ['Tap “Show on Home”', '(up to 6 at a time)'], { actor: 'ADMIN', cx: S, w: SW })
+    .node('e', 'terminal', ['Visitors read it, with a', '“Verified booking” mark'], { cx: M, w: 270 })
+    .node('note', 'note', ['You never edit the words.', 'The customer can edit it while', 'WAITING, and remove it at any', 'time (it disappears at once).'], { cx: S, w: SW });
+  f.stack(['s', 'n1', 'n2', 'd3', 'n4', 'n5', 'd6', 'n7', 'n8', 'd9', 'e'], { gaps: { e: 40 } });
+  f.align('s3', 'd3').align('note', 'n5').align('x6', 'd6').align('s9', 'd9');
+  f.edge('s', 'n1').edge('n1', 'n2').edge('n2', 'd3')
+    .edge('d3', 'n4', { label: 'Yes' })
+    .edge('d3', 's3', { fs: 'right', ts: 'left', label: 'No' })
+    .edge('n4', 'n5').edge('n5', 'd6')
+    .edge('d6', 'n7', { label: 'Yes' })
+    .edge('d6', 'x6', { fs: 'right', ts: 'left', label: 'No' })
+    .edge('n7', 'n8').edge('n8', 'd9')
+    .edge('d9', 'e', { label: 'No' })
+    .edge('d9', 's9', { fs: 'right', ts: 'left', label: 'Yes' })
+    .edge('s9', 'e', { fs: 'bottom', ts: 'right' })
+    .edge('note', 'n5', { fs: 'left', ts: 'right', dashed: true, arrow: false, color: '#adb5bd' });
+  return f.svg('C3 flowchart: testimonies');
+}
+
+function testimonyStatesSvg() {
+  const f = Flow();
+  f.node('w', 'state', ['WAITING', 'Sent by the customer;', 'not on the website yet'], { pal: ST.req })
+    .node('p', 'state', ['PUBLISHED', 'On the Testimonies page', '(and on Home if featured)'], { pal: ST.done })
+    .node('h', 'state', ['HIDDEN', 'Not shown on the website'], { pal: ST.off });
+  f.at('w', 160, 92).at('p', 520, 92).at('h', 340, 222);
+  f.edge('w', 'p', { fs: 'right', ts: 'left', label: 'Publish', labelAt: [340, 84] })
+    .edge('w', 'h', { fs: 'bottom', ts: 'left', label: 'Hide', labelAt: [167, 180], anchor: 'start' })
+    .edge('p', 'h', { fs: 'bottom', ts: 'right', fromOff: -40, toOff: -8, label: 'Hide', labelAt: [473, 180], anchor: 'end' })
+    .edge('h', 'p', { fs: 'right', ts: 'bottom', fromOff: 8, toOff: 40, label: 'Publish', labelAt: [567, 180], anchor: 'start' })
+    .edge('w', 'w', { fs: 'top', ts: 'top', fromOff: -40, toOff: 40, via: (N) => [[N.w.cx - 40, N.w.cy - N.w.h / 2 - 22], [N.w.cx + 40, N.w.cy - N.w.h / 2 - 22]], label: ['Customer edits', '(stays WAITING)'], labelAt: [160, 16] });
+  return f.svg('C3 diagram: testimony statuses');
+}
+
 // ─── Document ────────────────────────────────────────────────────────────────
 
 const fig = (svg, caption, size = '') =>
@@ -662,20 +762,32 @@ const cover = `
 <section class="cover">
   <div class="cover-band">
     <div class="kicker">KASOUNDBOX · PARTY NEEDS RENTAL</div>
-    <h1>Reservation &amp; Inventory<br>Process Flow</h1>
-    <p class="cover-sub">A plain-language guide to how a booking moves from “I want to rent” to “returned and paid”, and how the system keeps count of every chair, table, tent and videoke.</p>
+    <h1>Website, Reservation<br>&amp; Inventory Process Flow</h1>
+    <p class="cover-sub">A plain-language guide to how Kasoundbox works: the website customers visit, how a booking moves from “I want to rent” to “returned and paid”, how the system keeps count of every chair, table, tent and videoke, and how testimonies reach the website.</p>
   </div>
   <div class="journey">
     <span class="j j1">Request</span><span class="arrow">→</span>
     <span class="j j2">Confirm</span><span class="arrow">→</span>
     <span class="j j3">Deliver</span><span class="arrow">→</span>
     <span class="j j4">Pick up</span><span class="arrow">→</span>
-    <span class="j j5">Complete</span>
+    <span class="j j5">Complete</span><span class="arrow">→</span>
+    <span class="j j6">Testimony</span>
+  </div>
+  <div class="cover-new">
+    <div class="cover-new-title">New in version 1.1</div>
+    <ul>
+      <li>The <b>website</b>: Home, Rentals, Gallery, Testimonies, Promos, About, FAQ and Contact, with a Reserve button on every page (section 3 and Part C).</li>
+      <li>Customers reserve in <b>four steps</b>: When, What, Where and Review (A1).</li>
+      <li><b>Testimonies</b>: customers write them after pickup, and you choose which ones show (C3).</li>
+      <li>The <b>words customers see</b> for each status, like “Waiting for review” (A4).</li>
+      <li>Two new <b>notifications</b> for testimonies (D2), and the <b>website settings</b> (D1). Service areas moved from the Business settings to the website’s Contact details.</li>
+      <li>Delivery day says “deliver”, not “deliver and set up”, until you confirm whether you set up tents (A5).</li>
+    </ul>
   </div>
   <div class="cover-meta">
     <div><span>Document</span>Process flow guide for the Kasoundbox system</div>
     <div><span>Version</span>${VERSION}</div>
-    <div><span>Based on</span>Design spec v1 (docs/superpowers/specs/2026-09-26-kasoundbox-rental-reservation-design.md)</div>
+    <div><span>Based on</span>Design spec v1.1 (docs/superpowers/specs/2026-09-26-kasoundbox-rental-reservation-design.md)</div>
     <div><span>For</span>Kasoundbox admins</div>
   </div>
 </section>`;
@@ -689,7 +801,7 @@ const contents = `
     <li><b>3</b> The big picture</li>
     <li><b>4</b> The 22-hour rule</li>
     <li class="toc-part">Part A · Reservation module</li>
-    <li><b>A1</b> Customer sends a reservation request</li>
+    <li><b>A1</b> Customer reserves in four steps</li>
     <li><b>A2</b> Admin reviews the request</li>
     <li><b>A3</b> Admin confirms with the downpayment</li>
     <li><b>A4</b> Booking statuses (the life cycle)</li>
@@ -703,19 +815,23 @@ const contents = `
     <li><b>B4</b> Pickup and check-in (returns)</li>
     <li><b>B5</b> Recording inventory changes</li>
     <li><b>B6</b> Daily alerts</li>
+    <li class="toc-part">Part C · Website module</li>
+    <li><b>C1</b> The website pages</li>
+    <li><b>C2</b> Updating the website</li>
+    <li><b>C3</b> Testimonies</li>
     <li class="toc-part">Appendix</li>
-    <li><b>C1</b> Settings that change these flows</li>
-    <li><b>C2</b> Who gets notified</li>
+    <li><b>D1</b> Settings that change these flows</li>
+    <li><b>D2</b> Who gets notified</li>
   </ol>
 </section>`;
 
 const howToRead = section('1', 'How to read this guide',
-  'This guide shows, step by step, how the Kasoundbox system handles reservations and inventory. Each process has a flowchart (a picture of the steps) followed by an explanation in plain words. The numbers in each flowchart match the numbers in its explanation.',
+  'This guide shows, step by step, how the Kasoundbox system handles the website, reservations and inventory. Each process has a flowchart (a picture of the steps) followed by an explanation in plain words. The numbers in each flowchart match the numbers in its explanation.',
   `<h3>Who’s who</h3>
   <div class="cards">
-    <div class="card c-cust"><div class="card-tag">CUSTOMER</div>The person renting. Anyone can browse the website. An account is needed only to send a reservation request.</div>
-    <div class="card c-admin"><div class="card-tag">ADMIN</div>You and your dad. Only admins can confirm bookings, record payments, handle deliveries and returns, and change prices or settings.</div>
-    <div class="card c-sys"><div class="card-tag">SYSTEM</div>The app itself. It checks stock, computes prices, saves every change and sends notifications automatically.</div>
+    <div class="card c-cust"><div class="card-tag">CUSTOMER</div>The person renting. Anyone can visit the website and check prices. An account is needed only to send a reservation request or share a testimony.</div>
+    <div class="card c-admin"><div class="card-tag">ADMIN</div>You and your dad. Only admins can confirm bookings, record payments, handle deliveries and returns, change prices and settings, and update the website.</div>
+    <div class="card c-sys"><div class="card-tag">SYSTEM</div>The app itself. It checks stock, computes prices, saves every change, keeps the website up to date and sends notifications automatically.</div>
   </div>
   <h3>The shapes</h3>
   ${fig(legendSvg())}
@@ -729,13 +845,15 @@ const howToRead = section('1', 'How to read this guide',
 
 const keyWords = section('2', 'Key words',
   'The words used in the system and in this guide, in plain language.',
-  `<table class="kw">
+  `<h3>Bookings and stock</h3>
+  <table class="kw">
     <tr><th>Word</th><th>What it means</th></tr>
     <tr><td>Item</td><td>Something you rent out, like “Monobloc Chair” or “Videoke Set”. Each item has its own prices and stock.</td></tr>
     <tr><td>Counted item</td><td>An item tracked by quantity only, like 200 chairs. The system knows <i>how many</i>, not <i>which one</i>.</td></tr>
     <tr><td>Tracked unit</td><td>A high-value piece with its own code, like videoke machines VK-01 and VK-02. The system knows exactly which unit went to which customer.</td></tr>
     <tr><td>Package</td><td>A ready-made bundle with its own price, like Party Package A: 1 tent + 5 tables + 50 chairs.</td></tr>
-    <tr><td>Request</td><td>What a customer sends online. It does <b>not</b> hold any items yet.</td></tr>
+    <tr><td>Cart</td><td>The items and packages a customer has picked but not sent yet. It stays on their phone while they sign in.</td></tr>
+    <tr><td>Request</td><td>What a customer sends from the website. It does <b>not</b> hold any items yet. Customers see it as “Waiting for review”.</td></tr>
     <tr><td>Booking</td><td>A request that an admin has confirmed. From here the items are held for that customer’s time.</td></tr>
     <tr><td>Downpayment</td><td>What the customer pays first so the booking can be confirmed (for example 50% of the total).</td></tr>
     <tr><td>Balance</td><td>What the customer still owes: the total minus everything paid.</td></tr>
@@ -752,15 +870,30 @@ const keyWords = section('2', 'Key words',
     <tr><td>Manual discount</td><td>A discount an admin gives on one booking, like a suki discount.</td></tr>
     <tr><td>Overdue</td><td>Items that should have been checked in by now but weren’t.</td></tr>
     <tr><td>Short</td><td>A confirmed booking that can no longer be fully covered by the stock you have.</td></tr>
+  </table>
+  <h3>The website</h3>
+  <table class="kw">
+    <tr><th>Word</th><th>What it means</th></tr>
+    <tr><td>Website</td><td>The public pages anyone can visit without an account: Home, Rentals, Gallery, Testimonies, Promos, About, FAQ and Contact.</td></tr>
+    <tr><td>Reserve</td><td>The button on every page that starts a reservation. On phones it stays at the bottom of the screen and shows how many items are picked, like “Reserve (3)”.</td></tr>
+    <tr><td>Rentals</td><td>The page that lists every item and package with its prices, and how many are free for the customer’s event time.</td></tr>
+    <tr><td>Testimony</td><td>A short review a customer writes about their own booking after pickup. It shows on the website only if you publish it.</td></tr>
+    <tr><td>Verified booking</td><td>The mark on every testimony on the website. It shows the review came from a real booking.</td></tr>
+    <tr><td>Show on Home</td><td>Picked to appear on the Home page. Works for packages, gallery photos, questions (FAQ) and up to 6 testimonies.</td></tr>
+    <tr><td>Announcement</td><td>A one-line message at the top of every page, like a promo. It shows only between its start and end dates.</td></tr>
+    <tr><td>Gallery album</td><td>A group of photos on the Gallery page, like “Weddings” or “Birthdays”.</td></tr>
+    <tr><td>Service areas</td><td>The places you deliver to. They show on Home, on the Contact page and at the bottom of every page.</td></tr>
   </table>`);
 
 const bigPicture = section('3', 'The big picture',
-  'The system has two parts that work together. The left side of the diagram is the <b>reservation module</b>: the customer and the booking. The right side is the <b>inventory module</b>: your stock.',
-  `${fig(overviewSvg())}
+  'The system has three parts that work together. Across the top is the <b>website</b> customers visit. Below it, the left column is the <b>reservation module</b> (the customer and the booking) and the right column is the <b>inventory module</b> (your stock).',
+  `${fig(overviewSvg(), '', 'fig-md')}
   <ul class="plain">
+    <li><b>Website module</b> is the front door: the pages anyone can visit, with a <b>Reserve</b> button on every page. You change its text, photos and questions in the admin panel (Part C).</li>
     <li><b>Reservation module</b> handles people and paperwork: the request, confirmation, payments, delivery and pickup.</li>
     <li><b>Inventory module</b> keeps count: how many of each item you own, how many are in repair, and which items are promised to which booking at which time.</li>
     <li>They meet at the purple boxes: showing what’s free, holding items when a booking is confirmed, recording which units went out, and updating stock after check-in.</li>
+    <li>After pickup, the customer can share a testimony. The ones you publish go back on the website for the next visitors to read.</li>
   </ul>
   ${callout('good', 'The golden rule', '<p>The system never lets confirmed bookings need more of an item than you have at any moment. Every step in this guide protects that rule.</p>')}`);
 
@@ -786,26 +919,27 @@ const rule22 = section('4', 'The 22-hour rule',
 
 const partA = `<div class="part"><div class="part-kicker">PART A</div><div class="part-title">Reservation module</div><div class="part-sub">From a customer’s first look to a completed booking.</div></div>`;
 
-const a1 = section('A1', 'Customer sends a reservation request',
-  `${partA}How a customer goes from browsing to a saved request. A request does not hold any items yet; that happens only when you confirm it (A3).`,
+const a1 = section('A1', 'Customer reserves in four steps',
+  `${partA}How a customer goes from the Reserve button to a saved request, in four steps: <b>When</b>, <b>What</b>, <b>Where</b> and <b>Review</b>. A request does not hold any items yet; that happens only when you confirm it (A3).`,
   `${fig(a1Svg())}
   ${steps([
-    [1, 'Browse the catalog.', 'Anyone can look at items, packages and prices. No account is needed.'],
-    [2, 'Set the event time.', 'The customer picks the event date, the start (delivery) time from 8:00 AM to 5:00 PM, and how many days.'],
-    [3, 'See prices and availability.', 'For that exact time, each item shows its total price and how many are free, for example “Up to 37 available”. The quantity can’t go above that number.'],
-    [4, 'Add to the cart.', 'Items and packages can be mixed, for example Party Package A plus 20 extra chairs.'],
-    [5, 'Sign in.', 'Needed only when sending the request, and the cart is kept while signing in. The first time, the customer adds a full name and mobile number (09XXXXXXXXX) and accepts the privacy notice.'],
-    [6, 'Venue and notes.', 'The delivery address, a landmark to help the driver, notes, and an optional promo code.'],
-    [7, 'Promo code check.', 'If a code was entered, the system checks that it is active, within its dates, that the order reaches the code’s minimum amount, and that it still has uses left. If not, the customer is told why and can remove or fix it.'],
-    [8, 'Send the request.', ''],
-    [9, 'Final stock check.', 'Right before saving, the system checks stock again. If a booking was confirmed in the meantime and there’s no longer enough, the customer sees “Only X left for that time” and changes the cart.'],
-    [10, 'Saved as REQUESTED.', 'The request gets a code like KSB-7Q4M, and you and your dad get a notification.'],
+    [1, 'When.', 'The customer taps Reserve on any page (on phones it stays at the bottom of the screen) and picks the event date, the start (delivery) time from 8:00 AM to 5:00 PM, and how many days. Start times less than 24 hours away, or more than 365 days ahead, can’t be picked.'],
+    [2, 'Delivery and pickup times.', 'The system shows both right away, for example “Delivery Sat, Oct 10 · 8:00 AM, pickup Sun, Oct 11 · 6:00 AM”, and works out how many of each item are free for exactly that time.'],
+    [3, 'What.', 'Only what is free then can be added, and the quantity can’t go above the number free, for example “Up to 37 available”. Items and packages can be mixed, for example Party Package A plus 20 extra chairs. Everything else is listed under “Not available for your time”.'],
+    [4, 'Where.', 'The venue address, a landmark to help the driver, and notes for the crew (gate, parking, floor).'],
+    [5, 'Review.', 'The customer checks the items, the times and the price, including the downpayment needed to confirm, and can enter a promo code. The delivery fee isn’t included yet: the page says you’ll confirm it with them (A2).'],
+    [6, 'Promo code check.', 'If a code was entered, the system checks that it is active, within its dates, that the order reaches the code’s minimum amount, and that it still has uses left. If not, the customer is told why and can remove or fix it.'],
+    [7, 'Send the request.', ''],
+    [8, 'Sign in.', 'Needed only now, at the last step, and the cart is kept while signing in. The first time, the customer adds a full name and mobile number (09XXXXXXXXX) and accepts the privacy notice. Then they are back at Review and tap “Send request” again.'],
+    [9, 'Final stock check.', 'Right before saving, the system checks stock again. If a booking was confirmed in the meantime and there’s no longer enough, the customer sees “Only X left for that time” and goes back to What to change it.'],
+    [10, 'Saved as REQUESTED.', 'The request gets a code like KSB-8MWQ3Z, and you and your dad get a notification.'],
   ])}
-  <p>At the end, the customer sees what happens next (you review it and ask for the downpayment) and is asked to allow notifications.</p>
+  <p>At the end, the customer sees the “Request sent” page: the code, what happens next (you check the items and date, they pay the downpayment, you confirm), and a button to allow notifications. On iPhone, notifications work only after adding Kasoundbox to the Home Screen; the page shows how.</p>
   ${callout('info', 'Good to know', `<ul class="plain">
+    <li><b>Starting from Rentals:</b> customers can also set the event time on the Rentals page and tap Add there. It is the same cart, and Reserve then opens at the first step that isn’t done yet.</li>
     <li>A customer can have up to <b>3 open requests</b> at a time.</li>
     <li>A request must start at least <b>24 hours</b> from now and at most <b>365 days</b> ahead, for up to <b>30 days</b>.</li>
-    <li>The customer can cancel their own request while it is still REQUESTED. After confirmation, only admins can cancel.</li>
+    <li>The customer can cancel their own request while it is still REQUESTED. They can’t edit a sent request; they cancel it and send a new one. After confirmation, only admins can change or cancel it.</li>
     <li>If the start time passes and nobody confirmed the request, it <b>expires</b> automatically and the customer is told.</li>
   </ul>`)}`);
 
